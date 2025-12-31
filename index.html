@@ -68,48 +68,30 @@
   </div>
 
 <script>
-/**
- * Modèle : Étapes guidées + calcul de décision finale
- * - Étape 0 : Notation client A..F (ERP) -> garde-fous E/F, filtre D
- * - Étape 1 : Qualité demande Q1..Q3
- * - Étape 2 : Achat rapide (urgence) ? + stock / fournisseur maîtrisé
- * - Étape 3 : Type produit (catalogue / hors catalogue) + fournisseur maîtrisé ?
- * - Étape 4 : Validation technique acquise ? (besoin + technique + réglementaire)
- * - Étape 5 : Critères management (nouveau fournisseur, marge<22% + montant, etc.)
- */
+const SLA = { N0:"< 24 h", N1:"< 48 h", N2:"48–72 h", N3:"4–5 jours ouvrés" };
 
-const SLA = {
-  N0: "< 24 h",
-  N1: "< 48 h",
-  N2: "48–72 h",
-  N3: "4–5 jours ouvrés"
-};
-
-// État
 const S = {
-  rating: null,        // A..F
-  q: null,             // Q1..Q3
-  urgent: null,        // true/false
-  stock: null,         // true/false
-  supplierMastered: null, // true/false (si pas stock / hors catalogue)
-  productType: null,   // "catalogue" | "hors_catalogue"
-  supplierNew: false,  // bool
-  amount: null,        // number €
-  margin: null,        // number %
-  marginOverride: false, // bool (si la marge est un sujet)
-  validationOK: null,  // true/false (besoin+technique+réglementaire)
-  doubtReg: false,     // bool
+  rating: null, q: null, urgent: null,
+  stock: null,
+  productType: null,         // "catalogue" | "hors_catalogue"
+  supplierMastered: null,    // true/false
+  validationOK: null,
+  doubtReg: false,
+  amount: null,
+  margin: null,
+  supplierNew: false,
+  structuring: false
 };
 
 function el(id){ return document.getElementById(id); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
 function resetAll(){
-  Object.keys(S).forEach(k => {
-    if (typeof S[k] === "boolean") S[k] = false;
-    else S[k] = null;
-  });
-  S.supplierNew = false;
-  S.marginOverride = false;
-  S.doubtReg = false;
+  S.rating=null; S.q=null; S.urgent=null;
+  S.stock=null; S.productType=null; S.supplierMastered=null;
+  S.validationOK=null; S.doubtReg=false;
+  S.amount=null; S.margin=null;
+  S.supplierNew=false; S.structuring=false;
   renderNode("rating");
 }
 
@@ -120,7 +102,6 @@ function setStep(title, desc){
   el("inputs").innerHTML = "";
   el("result").style.display = "none";
 }
-
 function addBtn(label, onClick, primary=false){
   const b = document.createElement("button");
   b.textContent = label;
@@ -128,44 +109,45 @@ function addBtn(label, onClick, primary=false){
   b.onclick = onClick;
   el("choices").appendChild(b);
 }
-
 function addInputHTML(html){
   const d = document.createElement("div");
   d.innerHTML = html;
   el("inputs").appendChild(d);
 }
 
-// Décision finale : niveau + priorité + management + actions
 function computeDecision(){
-  // 1) Garde-fous paiement
+  // Paiement / garde-fous
   if (S.rating === "F"){
     return {
-      level: "N3",
-      priority: "⚫ Priorité très faible",
-      management: "✅ Obligatoire (arbitrage avant devis/commande)",
-      action: "Arbitrage managérial obligatoire. Pas de poursuite commerciale sans décision.",
-      warnings: ["Client F : retard >45 jours → arbitrage obligatoire avant tout engagement."]
+      level:"N3", sla:SLA.N3,
+      priority:"⚫ Priorité très faible",
+      management:"✅ Obligatoire (arbitrage avant devis/commande)",
+      action:"Arbitrage managérial obligatoire. Pas de poursuite commerciale sans décision.",
+      warnings:["Client F : retard >45 jours → arbitrage obligatoire avant tout engagement."],
+      opportunityNote:"Objectif : sécuriser l’entreprise et préserver le commerce durable."
     };
   }
 
   const warnings = [];
-  const managementTriggers = [];
+  const triggers = [];
 
   if (S.rating === "E"){
-    managementTriggers.push("Client E : retard >20 jours → sécurisation paiement / conditions renforcées");
+    triggers.push("Client E : retard >20 jours (sécurisation paiement)");
     warnings.push("Client E : sécuriser paiement avant engagement logistique.");
   }
-
-  // 2) Filtre D (consommateur de devis)
   const isFilterD = (S.rating === "D");
-  if (isFilterD) warnings.push("Client D : qualification obligatoire avant devis détaillé (éviter consommation de devis).");
+  if (isFilterD){
+    warnings.push("Client D : qualification obligatoire avant devis détaillé (éviter consommation de devis).");
+  }
 
-  // 3) Qualité demande et réponse produit -> priorité "de base"
-  // Base priority from matrix Q x R
-  const R = (S.stock === true) ? "R1" : (S.supplierMastered === true && S.productType === "catalogue") ? "R2"
-            : (S.supplierMastered === true && S.productType === "hors_catalogue") ? "R3" : "R3";
+  // R : capacité de réponse
+  // IMPORTANT : si stock=true => catalogue + fournisseur maîtrisé (déjà forcé en amont)
+  let R = "R3";
+  if (S.stock === true) R = "R1";
+  else if (S.productType === "catalogue" && S.supplierMastered === true) R = "R2";
+  else R = "R3";
 
-  // Priorité indicative
+  // Priorité (matrice)
   let priority = "🟡 Priorité normale";
   if (S.q === "Q1" && R === "R1") priority = "🔴 Priorité max";
   else if (S.q === "Q1" && R === "R2") priority = "🟠 Priorité haute";
@@ -177,75 +159,83 @@ function computeDecision(){
   else if (S.q === "Q3" && R === "R2") priority = "🔵 Priorité basse";
   else if (S.q === "Q3" && R === "R3") priority = "⚫ Priorité très faible";
 
-  // 4) Niveau (N0..N3)
-  // N0 est réservé panier web + complément simple : pas géré ici (si tu veux l’ajouter, on peut)
-  // Ici : N1 (catalogue/stock standard), N2 (ajustements/hors catalogue), N3 (structurant / risque élevé / F)
+  // Niveau par défaut
   let level = "N1";
-  if (S.productType === "hors_catalogue" || (S.productType === "catalogue" && S.stock === false && S.supplierMastered === false)) level = "N2";
-  if (S.q === "Q3" && R === "R3") level = "N3"; // très faible + incertain -> pilotage/filtrage
+  if (S.productType === "hors_catalogue" || R === "R3") level = "N2";
+  if (S.q === "Q3" && R === "R3") level = "N3";
 
-  // 5) Validation technique
+  // Validation technique / réglementaire
   if (S.validationOK === false || S.doubtReg === true){
-    managementTriggers.push("Validation technique/réglementaire non acquise (doute ou validation impossible)");
+    triggers.push("Validation technique/réglementaire non acquise (doute ou validation impossible)");
     warnings.push("Doute technique/réglementaire : solliciter support pour sécuriser l’adéquation au besoin.");
   }
 
-  // 6) Règles spécifiques management (selon tes critères)
-  // - Nouveau fournisseur : management si dossier > 1000 €
+  // Nouveau fournisseur : management si >1000€
   if (S.supplierNew === true){
     if (typeof S.amount === "number" && S.amount > 1000){
-      managementTriggers.push("Nouveau fournisseur + dossier > 1 000 €");
+      triggers.push("Nouveau fournisseur + dossier > 1 000 €");
     } else {
       warnings.push("Nouveau fournisseur : vigilance (seuil management > 1 000 €).");
     }
   }
 
-  // - Marge < 22% si dossier ≥ 5 000 €
+  // Marge <22% si dossier >=5000€
   if (typeof S.margin === "number" && typeof S.amount === "number"){
     if (S.margin < 22 && S.amount >= 5000){
-      managementTriggers.push("Marge < 22% sur dossier ≥ 5 000 € (arbitrage)");
+      triggers.push("Marge < 22% sur dossier ≥ 5 000 € (arbitrage)");
     }
   }
 
-  // - Hors catalogue + fournisseur non maîtrisé : management
+  // Hors catalogue + fournisseur non maîtrisé
   if (S.productType === "hors_catalogue" && S.supplierMastered === false){
-    managementTriggers.push("Produit hors catalogue + fournisseur non maîtrisé");
+    triggers.push("Produit hors catalogue + fournisseur non maîtrisé");
     warnings.push("Hors catalogue + fournisseur non maîtrisé : sécuriser délais/prix/logistique avant promesse.");
   }
 
-  // - Association catalogue / hors catalogue : si validation technique OK => autonomie
-  // (déjà géré via validationOK; on ne force pas management)
+  // Offre structurante
+  if (S.structuring === true){
+    triggers.push("Offre structurante (impact catalogue / règles)");
+    warnings.push("Offre structurante : pilotage managérial + capitalisation.");
+    level = "N3";
+  }
 
-  // 7) Client D : on privilégie qualification avant devis détaillé
+  // SLA affichage
+  let sla = SLA[level] || "—";
+  if (level === "N1"){
+    sla = (S.stock === true) ? "< 24 h (cible)" : "< 48 h (cible)";
+  }
+  if (level === "N2"){
+    if (S.productType === "hors_catalogue"){
+      sla = (S.supplierMastered === true) ? "3 jours (cible)" : "3–5 jours (cible)";
+    } else {
+      sla = "48–72 h (cible)";
+    }
+  }
+  if (level === "N3"){
+    sla = "4–5 jours ouvrés (cible)";
+  }
+
   let action = "Produire une offre cohérente (besoin → solution), avec délai réaliste.";
   if (isFilterD){
     action = "Qualifier avant devis détaillé : exiger infos + échéance + décisionnaire. Proposer pré-cadrage / fiche de spécification.";
   }
-
-  // 8) Management requis ?
-  const management = (managementTriggers.length > 0) ? "⚠️ Oui (au plus juste)" : "❌ Non (autonomie)";
-  if (managementTriggers.length > 0) level = (level === "N1") ? "N2" : level; // bascule vers N2 si besoin support
-
-  // 9) SLA (affichage)
-  let sla = SLA[level] || "—";
-  // Ajustement SLA hors catalogue / non maîtrisé
-  if (S.productType === "hors_catalogue"){
-    sla = (S.supplierMastered === true) ? "3 jours (cible)" : "3–5 jours (cible)";
-  } else if (S.productType === "catalogue"){
-    sla = (S.stock === true) ? "< 24 h (cible)" : "< 48 h (cible)";
+  if (S.rating === "E"){
+    action = "Sécuriser conditions de paiement avant engagement (confirmation / acompte / paiement avant expédition selon cas).";
+  }
+  if (S.structuring === true){
+    action = "Pilotage managérial : cadrage technique/règlementaire + décision d’intégration (règles, catalogue, standard).";
   }
 
-  // 10) Notes orientées opportunité
-  const opportunityNote = "Objectif : aller vite quand c’est maîtrisé, sécuriser quand la décision engage l’entreprise.";
+  const management = triggers.length
+    ? `✅ Sollicitation recommandée/obligatoire : ${triggers.join(" · ")}`
+    : "❌ Pas de sollicitation management requise";
+
+  // Si triggers => au moins N2 (sauf déjà N3)
+  if (triggers.length && level === "N1") level = "N2";
 
   return {
-    level,
-    priority,
-    management: managementTriggers.length ? `✅ Sollicitation recommandée/obligatoire : ${managementTriggers.join(" · ")}` : "❌ Pas de sollicitation management requise",
-    sla,
-    action,
-    warnings,
-    opportunityNote
+    level, sla, priority, management, action, warnings,
+    opportunityNote:"Objectif : aller vite quand c’est maîtrisé, sécuriser quand la décision engage l’entreprise."
   };
 }
 
@@ -260,18 +250,14 @@ function showResult(){
 
   box.innerHTML = `
     <h2>✅ Résultat</h2>
-
     <div class="kvs">
-      <div class="kv"><div class="k">Niveau</div><div class="v">${escapeHtml(d.level)} <span class="pill">${escapeHtml(d.sla || "")}</span></div></div>
+      <div class="kv"><div class="k">Niveau</div><div class="v">${escapeHtml(d.level)} <span class="pill">${escapeHtml(d.sla)}</span></div></div>
       <div class="kv"><div class="k">Priorité</div><div class="v">${escapeHtml(d.priority)}</div></div>
       <div class="kv"><div class="k">Sollicitation management</div><div class="v">${escapeHtml(d.management)}</div></div>
       <div class="kv"><div class="k">Action recommandée</div><div class="v">${escapeHtml(d.action)}</div></div>
     </div>
-
     ${warnHtml}
-
-    <div class="note ok"><b>Note :</b> ${escapeHtml(d.opportunityNote || "")}</div>
-
+    <div class="note ok"><b>Note :</b> ${escapeHtml(d.opportunityNote)}</div>
     <div class="divider"></div>
     <div class="row">
       <button class="primary" onclick="window.__restart()">↩️ Recommencer</button>
@@ -279,11 +265,6 @@ function showResult(){
   `;
 }
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-// Nœuds (étapes)
 function renderNode(node){
   switch(node){
 
@@ -314,9 +295,20 @@ function renderNode(node){
     }
 
     case "stock": {
-      setStep("Étape 3 — Produit disponible immédiatement (stock) ?", "Critère de réactivité : si le client est pressé et que tu maîtrises stock + prix + logistique, la priorité monte.");
-      addBtn("✅ Oui, produit en stock", ()=>{ S.stock=true; renderNode("productType"); }, true);
-      addBtn("❌ Non, produit à commander", ()=>{ S.stock=false; renderNode("productType"); });
+      setStep("Étape 3 — Produit disponible immédiatement (stock) ?", "IMPORTANT : si le produit est en stock, il est considéré comme produit catalogue + fournisseur maîtrisé (chaîne logistique et prix connus).");
+      addBtn("✅ Oui, produit en stock", ()=>{
+        S.stock = true;
+        S.productType = "catalogue";      // FORCÉ
+        S.supplierMastered = true;        // FORCÉ
+        S.supplierNew = false;            // Par défaut
+        renderNode("techValidation");      // On saute Type produit + Fournisseur
+      }, true);
+
+      addBtn("❌ Non, produit à commander", ()=>{
+        S.stock = false;
+        // On doit qualifier catalogue/hors catalogue + maîtrise fournisseur
+        renderNode("productType");
+      });
       break;
     }
 
@@ -339,7 +331,7 @@ function renderNode(node){
       addInputHTML(`
         <div class="field">
           <div class="chk"><input id="doubtReg" type="checkbox" />
-            <div><b>Doute réglementaire</b><div class="small">Coche si l’usage/texte applicable n’est pas clair (levage vs traction, documents requis, limites d’emploi, etc.).</div></div>
+            <div><b>Doute réglementaire</b><div class="small">Coche si l’usage / exigence applicable n’est pas clair (levage vs traction, documents requis, limites d’emploi…).</div></div>
           </div>
         </div>
       `);
@@ -357,7 +349,7 @@ function renderNode(node){
           <div class="field">
             <label>Montant du dossier (€)</label>
             <input id="amount" type="number" min="0" step="1" placeholder="Ex : 4200" />
-            <div class="small">Utilisé pour les seuils : nouveau fournisseur (>1 000€) et marge <22% (≥5 000€).</div>
+            <div class="small">Seuils : nouveau fournisseur (>1 000€) · marge <22% (≥5 000€).</div>
           </div>
           <div class="field">
             <label>Marge (%)</label>
@@ -370,15 +362,11 @@ function renderNode(node){
           <div class="chk"><input id="supplierNew" type="checkbox" />
             <div><b>Nouveau fournisseur</b><div class="small">Fournisseur non référencé / première commande / pas d’historique.</div></div>
           </div>
-          <div style="height:8px;"></div>
-          <div class="chk"><input id="marginOverride" type="checkbox" />
-            <div><b>Négociation de marge en-dessous du cadre</b><div class="small">Coche si le sujet “marge” est un point de décision (ex : effort commercial demandé).</div></div>
-          </div>
         </div>
 
         <div class="field" style="margin-top:10px;">
           <div class="chk"><input id="structuring" type="checkbox" />
-            <div><b>Offre structurante (impact catalogue / règles)</b><div class="small">Coche si l’opportunité modifie l’offre MATERIEL-LEVAGE (nouvelle règle, nouvelle famille, standardisation, etc.).</div></div>
+            <div><b>Offre structurante (impact catalogue / règles)</b><div class="small">Nouvelle famille, nouvelle règle, standardisation, etc.</div></div>
           </div>
         </div>
       `);
@@ -386,55 +374,16 @@ function renderNode(node){
       el("amount").oninput = (e)=>{ S.amount = e.target.value === "" ? null : Number(e.target.value); };
       el("margin").oninput = (e)=>{ S.margin = e.target.value === "" ? null : Number(e.target.value); };
       el("supplierNew").onchange = (e)=>{ S.supplierNew = !!e.target.checked; };
-      el("marginOverride").onchange = (e)=>{ S.marginOverride = !!e.target.checked; };
-      el("structuring").onchange = (e)=>{
-        // si structurant -> on force N3 via validation computeDecision (on l’utilise en “warning/trigger”)
-        // pour rester simple, on encode en “validationOK=false” si coché ? Non.
-        // On ajoute plutôt un déclencheur via supplierNew? -> ici on passe par un flag local.
-        // => On stocke dans S via une propriété dynamic :
-        S.structuring = !!e.target.checked;
-      };
+      el("structuring").onchange = (e)=>{ S.structuring = !!e.target.checked; };
 
-      addBtn("✅ Calculer le résultat", ()=>{
-        // Si structurant, on force une décision N3 + management
-        if (S.structuring === true){
-          // On surclasse le résultat via un hack simple : mettre validationOK=false ET produit hors catalogue+non maîtrisé ?
-          // Mieux : on injecte un trigger dans warnings/management via un champ dédié.
-          // On va gérer dans computeDecision via présence S.structuring.
-        }
-        showResult();
-      }, true);
-
+      addBtn("✅ Calculer le résultat", ()=>showResult(), true);
       addBtn("↩️ Revenir au début", ()=>resetAll());
       break;
     }
   }
 }
 
-// Patch computeDecision pour prendre en compte "structuring"
-const _computeDecision = computeDecision;
-computeDecision = function(){
-  const d = _computeDecision();
-  // Si offre structurante cochée : N3 + management obligatoire
-  if (S.structuring === true){
-    const extraWarn = (d.warnings || []);
-    extraWarn.push("Offre structurante : impact catalogue/règles → pilotage managérial.");
-    return {
-      ...d,
-      level: "N3",
-      priority: d.priority.startsWith("🔴") ? d.priority : "🔵 Priorité structurante",
-      sla: SLA["N3"],
-      management: "✅ Obligatoire (offre structurante : pilotage + capitalisation)",
-      warnings: extraWarn,
-      action: "Pilotage managérial : cadrage technique/règlementaire + décision d’intégration (règles, catalogue, standard)."
-    };
-  }
-  return d;
-};
-
 window.__restart = resetAll;
-
-// Init
 renderNode("rating");
 </script>
 </body>
