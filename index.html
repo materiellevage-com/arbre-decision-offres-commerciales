@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Arbre de décision — Offres (N0 à N3)</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 16px; }
+    .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; max-width: 720px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    button { padding: 10px 12px; border-radius: 10px; border: 1px solid #d1d5db; background: white; cursor: pointer; }
+    button:hover { border-color: #9ca3af; }
+    .meta { color: #6b7280; font-size: 13px; margin-top: 6px; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 999px; border: 1px solid #d1d5db; font-size: 12px; }
+    .result { margin-top: 12px; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; }
+    .hint { margin-top: 10px; font-size: 13px; color: #374151; }
+    .muted { color: #6b7280; }
+    .small { font-size: 12px; }
+    .divider { height: 1px; background: #e5e7eb; margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">MATERIEL-LEVAGE</div>
+    <h2 style="margin:10px 0 6px;">🌳 Arbre de décision — Niveau d’offre</h2>
+    <div class="meta">Répondre vite, juste, et solliciter le support managérial au plus juste.</div>
+
+    <div class="divider"></div>
+
+    <div id="stepTitle" style="font-weight:700;"></div>
+    <div id="stepDesc" class="meta"></div>
+
+    <div class="row" id="choices"></div>
+
+    <div id="result" class="result" style="display:none;"></div>
+
+    <div class="hint">
+      ✅ <b>Règle terrain :</b> si tu hésites entre deux niveaux, choisis le plus haut.
+      <div class="muted small">N0 &lt; 24h · N1 &lt; 48h · N2 48–72h · N3 4–5 jours ouvrés</div>
+    </div>
+  </div>
+
+  <script>
+    const SLA = {
+      N0: "< 24 h",
+      N1: "< 48 h",
+      N2: "48–72 h",
+      N3: "4–5 jours ouvrés"
+    };
+
+    // Nodes: question + choices -> next node OR result
+    const tree = {
+      start: {
+        title: "Question 1 — Panier web déjà passé ?",
+        desc: "Le client a-t-il déjà validé un panier sur MATERIEL-LEVAGE.COM ?",
+        choices: [
+          { label: "✅ Oui", next: "web_complement" },
+          { label: "❌ Non", next: "catalogue_standard" }
+        ]
+      },
+      web_complement: {
+        title: "Question 2 — Complément financier simple ?",
+        desc: "Uniquement transport / conditionnement / frais logistiques / ajustement de paiement (sans modifier le produit) ?",
+        choices: [
+          { label: "✅ Oui", result: { level: "N0", label: "🔵 Niveau 0", who: "Commercial flux entrant / ADV", note: "Traitement automatique. Pas de négociation. Pas de validation managériale." } },
+          { label: "❌ Non", next: "catalogue_standard" }
+        ]
+      },
+      catalogue_standard: {
+        title: "Question 3 — Offre catalogue standard ?",
+        desc: "Produit catalogue, configuration standard, fournisseur référencé, marge connue ?",
+        choices: [
+          { label: "✅ Oui", result: { level: "N1", label: "🟢 Niveau 1", who: "Commercial flux entrant", note: "Autonomie complète. Objectif : réponse < 48h." } },
+          { label: "❌ Non", next: "enjeu_ou_ajustement" }
+        ]
+      },
+      enjeu_ou_ajustement: {
+        title: "Question 4 — Ajustement / enjeu / client stratégique ?",
+        desc: "Dérogation au cadre (marge, combinaison, client stratégique) mais sans impact structurel sur l’offre ?",
+        choices: [
+          { label: "✅ Oui", result: { level: "N2", label: "🟡 Niveau 2", who: "Commercial Plus / Référent offres", note: "Validation référent. Management sollicité uniquement si dérogation stratégique majeure." } },
+          { label: "❌ Non", result: { level: "N3", label: "🔴 Niveau 3", who: "Manager central", note: "Offre structurante. Pilotage + capitalisation (règle / standard / brique d’offre)." } }
+        ]
+      }
+    };
+
+    let current = "start";
+
+    function renderNode(nodeId) {
+      current = nodeId;
+      const node = tree[nodeId];
+      document.getElementById("result").style.display = "none";
+
+      document.getElementById("stepTitle").textContent = node.title;
+      document.getElementById("stepDesc").textContent = node.desc;
+
+      const choices = document.getElementById("choices");
+      choices.innerHTML = "";
+
+      node.choices.forEach(ch => {
+        const btn = document.createElement("button");
+        btn.textContent = ch.label;
+        btn.onclick = () => {
+          if (ch.result) return showResult(ch.result);
+          renderNode(ch.next);
+        };
+        choices.appendChild(btn);
+      });
+    }
+
+    function showResult(res) {
+      const box = document.getElementById("result");
+      box.style.display = "block";
+      box.innerHTML = `
+        <div style="font-weight:800; font-size:16px; margin-bottom:6px;">✅ Résultat : ${res.label}</div>
+        <div><b>Délai cible :</b> ${SLA[res.level]}</div>
+        <div><b>Responsable :</b> ${res.who}</div>
+        <div style="margin-top:8px;"><b>Note :</b> ${res.note}</div>
+        <div class="divider"></div>
+        <button onclick="window.__reset()">↩️ Recommencer</button>
+      `;
+    }
+
+    window.__reset = () => renderNode("start");
+
+    renderNode("start");
+  </script>
+</body>
+</html>
