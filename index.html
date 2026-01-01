@@ -3,492 +3,1314 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Arbre de décision — Offres commerciales (MATERIEL-LEVAGE)</title>
+  <title>Démo — Arbre de décision Levage + Filtres (20 produits)</title>
   <style>
-    :root { --b:#e5e7eb; --t:#111827; --m:#6b7280; --bg:#ffffff; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 16px; color: var(--t); background: var(--bg); }
-    .wrap { max-width: 860px; margin: 0 auto; }
-    .card { border: 1px solid var(--b); border-radius: 14px; padding: 14px; }
-    .top { display:flex; align-items:flex-start; justify-content:space-between; gap: 10px; flex-wrap: wrap; }
-    .badge { display:inline-block; padding: 4px 10px; border-radius: 999px; border:1px solid var(--b); font-size: 12px; }
-    h1 { font-size: 18px; margin: 10px 0 6px; }
-    .sub { color: var(--m); font-size: 13px; }
-    .divider { height: 1px; background: var(--b); margin: 12px 0; }
-    .stepTitle { font-weight: 800; margin: 0 0 4px; }
-    .stepDesc { color: var(--m); font-size: 13px; margin: 0 0 10px; }
-    .row { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-    button { padding: 10px 12px; border-radius: 10px; border: 1px solid #d1d5db; background: white; cursor: pointer; }
-    button:hover { border-color: #9ca3af; }
-    button.primary { border-color:#111827; font-weight:700; }
-    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    @media (max-width:720px){ .grid{ grid-template-columns:1fr; } }
-    .field { border:1px solid var(--b); border-radius: 12px; padding: 10px; margin-top: 10px; }
-    label { font-size: 12px; color: var(--m); display:block; margin-bottom: 6px; }
-    input[type="number"]{ width: 100%; padding: 10px; border-radius: 10px; border:1px solid #d1d5db; }
-    input[type="checkbox"]{ transform: translateY(1px); }
-    .chk { display:flex; align-items:flex-start; gap:8px; font-size: 13px; color: var(--t); }
-    .result { display:none; border:1px solid var(--b); border-radius: 14px; padding: 12px; background:#fafafa; }
-    .result h2 { margin: 0 0 8px; font-size: 16px; }
-    .kvs { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-    .kv { border:1px solid var(--b); border-radius: 12px; padding: 10px; background:white; }
-    .kv .k { color: var(--m); font-size: 12px; margin-bottom: 4px; }
-    .kv .v { font-weight: 800; }
-    .note { margin-top: 10px; color: #374151; font-size: 13px; }
-    .small { font-size: 12px; color: var(--m); margin-top: 6px; }
-    .pill { display:inline-block; padding: 2px 8px; border:1px solid var(--b); border-radius: 999px; font-size: 12px; margin-left: 6px; color: #374151;}
-    .warn { color: #7c2d12; }
-    .ok { color: #065f46; }
+    :root{
+      --bg:#0b1220; --panel:#101a33; --panel2:#0f1730; --border:#223055;
+      --txt:#e7ecff; --muted:#b8c3ff; --muted2:#98a6e6;
+      --ok:#39d98a; --warn:#ffcc66; --bad:#ff6b6b; --info:#6aa8ff;
+      --chip:#1b2a55; --chip2:#223a7a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:var(--sans); background: radial-gradient(1200px 700px at 20% 0%, #182a63 0%, var(--bg) 60%);
+      color:var(--txt);
+    }
+    header{
+      padding:22px 18px; border-bottom:1px solid rgba(255,255,255,.08);
+      position:sticky; top:0; background:rgba(11,18,32,.75); backdrop-filter: blur(10px); z-index:50;
+    }
+    header h1{margin:0; font-size:18px; letter-spacing:.2px}
+    header .sub{color:var(--muted2); font-size:13px; margin-top:4px}
+    main{max-width:1180px; margin:0 auto; padding:18px}
+    .grid{
+      display:grid; grid-template-columns: 420px 1fr; gap:14px;
+    }
+    @media (max-width: 1020px){
+      .grid{grid-template-columns: 1fr}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .card .hd .ttl{font-weight:700; font-size:14px}
+    .card .hd .pill{
+      font-size:12px; color:var(--muted);
+      background: rgba(106,168,255,.12);
+      border:1px solid rgba(106,168,255,.25);
+      padding:5px 9px; border-radius:999px;
+    }
+    .card .bd{padding:14px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .btn{
+      background: linear-gradient(180deg, rgba(106,168,255,.22), rgba(106,168,255,.08));
+      border:1px solid rgba(106,168,255,.35);
+      color:var(--txt); padding:10px 12px; border-radius:12px;
+      cursor:pointer; font-weight:600; font-size:13px;
+      transition: transform .06s ease, opacity .2s ease, border-color .2s ease;
+      user-select:none;
+    }
+    .btn:active{transform: translateY(1px)}
+    .btn.secondary{
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--muted);
+    }
+    .btn.danger{
+      background: rgba(255,107,107,.10);
+      border-color: rgba(255,107,107,.35);
+      color: var(--txt);
+    }
+    .btn.ok{
+      background: rgba(57,217,138,.12);
+      border-color: rgba(57,217,138,.35);
+    }
+    .btn.tiny{padding:7px 9px; font-size:12px; border-radius:10px}
+    .tag{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px; font-size:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      color:var(--muted);
+      margin: 0 6px 6px 0;
+    }
+    .tag b{color:var(--txt); font-weight:700}
+    .tag.ok{border-color: rgba(57,217,138,.35); background: rgba(57,217,138,.10)}
+    .tag.warn{border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.10)}
+    .tag.bad{border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.10)}
+    .tag.info{border-color: rgba(106,168,255,.35); background: rgba(106,168,255,.10)}
+    .field{margin:10px 0}
+    label{display:block; font-size:12px; color:var(--muted2); margin-bottom:6px}
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%; background: rgba(0,0,0,.18); color:var(--txt);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 12px; padding:10px 10px; outline:none;
+      font-size:13px;
+    }
+    textarea{min-height: 240px; font-family: var(--mono); font-size:12px; line-height:1.35}
+    input[type="range"]{width:100%}
+    .muted{color:var(--muted2); font-size:12px}
+    .divider{height:1px; background: rgba(255,255,255,.08); margin:12px 0}
+    .qbox{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      border-radius: 14px;
+      padding:12px;
+    }
+    .qtitle{font-weight:800; font-size:14px; margin:0 0 8px}
+    .qhelp{color:var(--muted2); font-size:12px; margin:0 0 10px}
+    .opt{display:flex; gap:8px; flex-wrap:wrap}
+    .opt button{flex: 1 1 auto; min-width: 130px}
+    .smallnote{font-size:12px; color:var(--muted2); margin-top:8px}
+    table{width:100%; border-collapse: collapse; font-size:12px}
+    th,td{border-bottom:1px solid rgba(255,255,255,.08); padding:9px 8px; vertical-align:top}
+    th{color:var(--muted); text-align:left; font-weight:800; font-size:12px}
+    tr:hover td{background: rgba(255,255,255,.02)}
+    .status{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 8px; border-radius:999px; font-weight:800; font-size:11px;
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .status.ok{border-color: rgba(57,217,138,.35); background: rgba(57,217,138,.10)}
+    .status.warn{border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.10)}
+    .status.bad{border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.10)}
+    .status.info{border-color: rgba(106,168,255,.35); background: rgba(106,168,255,.10)}
+    .kpi{
+      display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;
+    }
+    @media (max-width: 1020px){
+      .kpi{grid-template-columns: repeat(2, 1fr)}
+    }
+    .kpi .box{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      border-radius: 14px;
+      padding:12px;
+    }
+    .kpi .box .n{font-size:20px; font-weight:900}
+    .kpi .box .t{font-size:12px; color:var(--muted2)}
+    .twoCols{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+    @media (max-width: 800px){ .twoCols{grid-template-columns: 1fr} }
+    .footer{
+      margin-top:16px; color:var(--muted2); font-size:12px; opacity:.9;
+      padding: 8px 2px 18px;
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="top">
-        <div>
-          <span class="badge">MATERIEL-LEVAGE</span>
-          <h1>🌳 Arbre de décision — Priorisation des offres</h1>
-          <div class="sub">Objectif : répondre vite et juste, et solliciter le support managérial au plus juste.</div>
-          <div class="small">Règle terrain : si tu hésites entre deux niveaux, choisis le plus haut.</div>
-        </div>
-        <div class="badge">SLA : N0 &lt;24h · N1 &lt;48h · N2 48–72h · N3 4–5j · N4 = pas de réponse</div>
+<header>
+  <h1>Démo — Arbre de décision (questions d’usage) → présélection → filtres techniques (20 produits fictifs)</h1>
+  <div class="sub">Copie ce fichier dans un dépôt GitHub Pages (ex: <span style="font-family:var(--mono)">index.html</span>). Un “Back-office” intégré permet d’éditer les questions + règles + base produits (JSON).</div>
+</header>
+
+<main class="grid">
+
+  <!-- LEFT: QUESTION FLOW -->
+  <section class="card" id="flowCard">
+    <div class="hd">
+      <div class="ttl">Parcours utilisateur</div>
+      <div class="pill" id="modePill">Mode : Usager</div>
+    </div>
+    <div class="bd">
+
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn tiny" id="modeUserBtn">Usager (simple)</button>
+        <button class="btn tiny secondary" id="modeExpertBtn">Expert (avancé)</button>
+        <button class="btn tiny secondary" id="resetBtn" title="Réinitialiser toutes les réponses">Réinitialiser</button>
+      </div>
+
+      <div id="progressTags"></div>
+
+      <div class="qbox" id="questionBox">
+        <!-- dynamic -->
       </div>
 
       <div class="divider"></div>
 
-      <div id="step">
-        <div class="stepTitle" id="stepTitle"></div>
-        <div class="stepDesc" id="stepDesc"></div>
-
-        <div id="inputs"></div>
-        <div class="row" id="choices"></div>
+      <div class="kpi">
+        <div class="box">
+          <div class="n" id="clarityScore">—</div>
+          <div class="t">Score clarté</div>
+        </div>
+        <div class="box">
+          <div class="n" id="priorityLevel">—</div>
+          <div class="t">Priorité</div>
+        </div>
+        <div class="box">
+          <div class="n" id="needsExpert">—</div>
+          <div class="t">Escalade spécialiste</div>
+        </div>
+        <div class="box">
+          <div class="n" id="shortlistCount">—</div>
+          <div class="t">Produits présélectionnés</div>
+        </div>
       </div>
 
-      <div class="result" id="result"></div>
+      <div class="divider"></div>
+
+      <div class="qbox">
+        <p class="qtitle" style="margin-bottom:6px">Sortie : Cahier des charges (généré)</p>
+        <p class="qhelp">Résumé “commercial / spécialiste”. Copiable en 1 clic.</p>
+        <div class="row" style="margin-bottom:10px">
+          <button class="btn tiny ok" id="copyCdcBtn">Copier</button>
+          <button class="btn tiny secondary" id="downloadCdcBtn">Télécharger .txt</button>
+        </div>
+        <textarea id="cdcText" readonly></textarea>
+        <div class="smallnote">Astuce : ajoute ce bloc dans ta page “contact spécialiste” pour pré-remplir la demande.</div>
+      </div>
+
     </div>
-  </div>
+  </section>
+
+  <!-- RIGHT: RESULTS + FILTERS + BACK OFFICE -->
+  <section class="card">
+    <div class="hd">
+      <div class="ttl">Résultats & filtres</div>
+      <div class="pill" id="resultPill">Liste produits</div>
+    </div>
+    <div class="bd">
+
+      <div class="twoCols">
+        <div class="qbox">
+          <p class="qtitle">Filtres techniques (niveau 2)</p>
+          <p class="qhelp">Ces filtres réduisent la présélection à tout moment, sans réintroduire des produits exclus par l’arbre.</p>
+
+          <div class="field">
+            <label>CMU minimale (tonnes)</label>
+            <input type="range" min="0" max="5" step="0.25" value="0" id="filterCmu" />
+            <div class="muted">Seuil : <b id="filterCmuVal">0</b> T</div>
+          </div>
+
+          <div class="field">
+            <label>Niveau d’installation</label>
+            <select id="filterInstall">
+              <option value="">Tous</option>
+              <option value="simple">Simple</option>
+              <option value="standard">Standard</option>
+              <option value="complexe">Complexe</option>
+              <option value="etude">Étude requise</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Source d’énergie (appareils)</label>
+            <select id="filterEnergy">
+              <option value="">Toutes</option>
+              <option value="manuel">Manuel</option>
+              <option value="electrique">Électrique</option>
+              <option value="pneumatique">Pneumatique</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Délai</label>
+            <select id="filterDelay">
+              <option value="">Tous</option>
+              <option value="stock">Stock</option>
+              <option value="court">Court</option>
+              <option value="long">Long</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Budget</label>
+            <select id="filterBudget">
+              <option value="">Tous</option>
+              <option value="€">€</option>
+              <option value="€€">€€</option>
+              <option value="€€€">€€€</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <button class="btn tiny secondary" id="clearFiltersBtn">Réinitialiser filtres</button>
+          </div>
+        </div>
+
+        <div class="qbox">
+          <p class="qtitle">Alerte & restrictions</p>
+          <p class="qhelp">Messages “canal expert” déclenchés par les réponses (ATEX, salin, excentré, 4 points, etc.).</p>
+          <div id="alertsBox"></div>
+          <div class="divider"></div>
+          <p class="qtitle" style="margin-bottom:6px">Actions</p>
+          <div class="row">
+            <button class="btn tiny" id="showSupportsBtn">Supports</button>
+            <button class="btn tiny" id="showDevicesBtn">Appareils</button>
+            <button class="btn tiny" id="showAccessoriesBtn">Accessoires</button>
+            <button class="btn tiny secondary" id="showAllBtn">Tout</button>
+          </div>
+          <div class="smallnote">Le listing est filtrable par “brique” : Support / Appareil / Accessoire.</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="qbox">
+        <div class="row" style="justify-content:space-between; align-items:center">
+          <div>
+            <div class="qtitle" style="margin:0">Tableau produits (présélection + filtres)</div>
+            <div class="qhelp" style="margin:6px 0 0">Statut : Compatible / À vérifier / Incompatible (selon règles & restrictions).</div>
+          </div>
+          <div class="row">
+            <button class="btn tiny secondary" id="exportJsonBtn">Exporter JSON (base + config)</button>
+          </div>
+        </div>
+
+        <div style="overflow:auto; border-radius: 12px; border:1px solid rgba(255,255,255,.10); margin-top:10px">
+          <table id="productsTable">
+            <thead>
+              <tr>
+                <th>Produit</th>
+                <th>Brique</th>
+                <th>CMU</th>
+                <th>Hauteur max</th>
+                <th>Énergie</th>
+                <th>Environnements</th>
+                <th>Installation</th>
+                <th>Délai</th>
+                <th>Budget</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody><!-- dynamic --></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- BACK OFFICE -->
+      <div class="card" style="box-shadow:none; border-radius: var(--radius); border:1px dashed rgba(255,255,255,.18)">
+        <div class="hd">
+          <div class="ttl">Back-office (paramétrage JSON)</div>
+          <div class="pill">Questions • règles • base produits</div>
+        </div>
+        <div class="bd">
+          <p class="muted" style="margin-top:0">
+            Modifie le JSON ci-dessous puis clique <b>Appliquer</b>. Tout est embarqué dans ce fichier HTML.
+          </p>
+          <div class="row" style="margin-bottom:10px">
+            <button class="btn ok" id="applyConfigBtn">Appliquer</button>
+            <button class="btn secondary" id="restoreDefaultBtn">Restaurer défaut</button>
+          </div>
+          <textarea id="configEditor"></textarea>
+          <div class="footer">
+            ✅ Démo autonome • ✅ GitHub Pages compatible • ✅ 20 produits fictifs (5 supports, 7 appareils, 8 accessoires) •
+            ⚠️ Logique simplifiée volontairement (à adapter à ta base réelle / règles plus fines).
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
 
 <script>
-const SLA = {
-  N0:"< 24 h",
-  N1:"< 48 h",
-  N2:"48–72 h",
-  N3:"4–5 jours ouvrés",
-  N4:"Pas de réponse"
+/**
+ * =========================
+ * 1) DEFAULT CONFIG (JSON)
+ * =========================
+ * - 20 produits fictifs
+ * - questions simples "usager" + questions "expert"
+ * - règles minimales pour statuts + alertes
+ */
+const DEFAULT_CONFIG = {
+  meta: {
+    siteName: "Démo Levage",
+    specialistCTA: "📞 Contacter un spécialiste Matériel Levage",
+    currency: "EUR"
+  },
+
+  // --- Products (20) ---
+  products: [
+    // 5 SUPPORTS
+    { id:"SUP-01", name:"Portique mobile aluminium", brick:"support", cmuT:2.0, heightMaxM:5, energy:"", env:["interieur","exterieur"], install:"standard", delay:"stock", budget:"€€", notes:"Sol plan requis, usage régulier."},
+    { id:"SUP-02", name:"Portique acier fixe", brick:"support", cmuT:3.2, heightMaxM:8, energy:"", env:["interieur","exterieur","salin"], install:"complexe", delay:"court", budget:"€€€", notes:"Fixations / ancrages à valider."},
+    { id:"SUP-03", name:"Potence murale", brick:"support", cmuT:1.0, heightMaxM:4, energy:"", env:["interieur"], install:"complexe", delay:"court", budget:"€€", notes:"Structure porteuse à valider."},
+    { id:"SUP-04", name:"Poutre de roulement (profil)", brick:"support", cmuT:5.0, heightMaxM:10, energy:"", env:["interieur"], install:"etude", delay:"long", budget:"€€€", notes:"Étude structure obligatoire."},
+    { id:"SUP-05", name:"Portique inox environnement salin", brick:"support", cmuT:2.0, heightMaxM:6, energy:"", env:["exterieur","salin"], install:"complexe", delay:"long", budget:"€€€", notes:"Conçu pour zones exposées (salinité)."},
+    // 7 APPAREILS
+    { id:"APP-01", name:"Palan manuel à chaîne", brick:"appareil", cmuT:2.0, heightMaxM:3, energy:"manuel", env:["interieur","exterieur"], install:"simple", delay:"stock", budget:"€", notes:"Pour usage ponctuel / faible cadence."},
+    { id:"APP-02", name:"Palan électrique 230V", brick:"appareil", cmuT:2.0, heightMaxM:6, energy:"electrique", env:["interieur"], install:"standard", delay:"stock", budget:"€€", notes:"Usage régulier, hors environnement salin."},
+    { id:"APP-03", name:"Palan électrique 400V industriel", brick:"appareil", cmuT:3.2, heightMaxM:8, energy:"electrique", env:["interieur","exterieur"], install:"standard", delay:"court", budget:"€€€", notes:"Pour cadence plus élevée."},
+    { id:"APP-04", name:"Treuil électrique (traction)", brick:"appareil", cmuT:1.0, heightMaxM:0, energy:"electrique", env:["interieur","exterieur"], install:"standard", delay:"stock", budget:"€€", notes:"Traction / déplacement, pas levage vertical continu."},
+    { id:"APP-05", name:"Chariot porte-palan", brick:"appareil", cmuT:2.0, heightMaxM:0, energy:"manuel", env:["interieur","exterieur"], install:"standard", delay:"stock", budget:"€", notes:"Translation sur poutre/rail compatible."},
+    { id:"APP-06", name:"Palan pneumatique (ATEX)", brick:"appareil", cmuT:2.0, heightMaxM:6, energy:"pneumatique", env:["atex","exterieur"], install:"complexe", delay:"long", budget:"€€€", notes:"Pour zones ATEX, nécessite air comprimé."},
+    { id:"APP-07", name:"Palan électrique inox (salin)", brick:"appareil", cmuT:2.0, heightMaxM:6, energy:"electrique", env:["exterieur","salin"], install:"complexe", delay:"long", budget:"€€€", notes:"Protection anti-corrosion renforcée."},
+    // 8 ACCESSOIRES
+    { id:"ACC-01", name:"Élingue chaîne 2 brins (G80)", brick:"accessoire", cmuT:2.0, heightMaxM:0, energy:"", env:["interieur","exterieur"], install:"simple", delay:"stock", budget:"€€", notes:"Supporte mieux abrasion / arêtes."},
+    { id:"ACC-02", name:"Élingue textile plate 2T", brick:"accessoire", cmuT:2.0, heightMaxM:0, energy:"", env:["interieur"], install:"simple", delay:"stock", budget:"€", notes:"Interdit arêtes vives sans protection."},
+    { id:"ACC-03", name:"Manille lyre HR 3,25T", brick:"accessoire", cmuT:3.25, heightMaxM:0, energy:"", env:["interieur","exterieur"], install:"simple", delay:"stock", budget:"€", notes:"Vérifier efforts latéraux."},
+    { id:"ACC-04", name:"Palonnier 4 points 2T", brick:"accessoire", cmuT:2.0, heightMaxM:0, energy:"", env:["interieur","exterieur"], install:"standard", delay:"court", budget:"€€€", notes:"Répartition des efforts, idéal charges excentrées."},
+    { id:"ACC-05", name:"Anneaux de levage orientables (x4)", brick:"accessoire", cmuT:2.0, heightMaxM:0, energy:"", env:["interieur","exterieur"], install:"standard", delay:"stock", budget:"€€", notes:"Montage / couple de serrage à respecter."},
+    { id:"ACC-06", name:"Ventouse double (non ATEX)", brick:"accessoire", cmuT:0.5, heightMaxM:0, energy:"", env:["interieur"], install:"standard", delay:"court", budget:"€€", notes:"Surface propre, non poreuse."},
+    { id:"ACC-07", name:"Kit protection d’arêtes (UHMWPE)", brick:"accessoire", cmuT:0, heightMaxM:0, energy:"", env:["interieur","exterieur"], install:"simple", delay:"stock", budget:"€", notes:"À utiliser avec textile pour arêtes."},
+    { id:"ACC-08", name:"Élingue chaîne inox 4 brins", brick:"accessoire", cmuT:2.0, heightMaxM:0, energy:"", env:["exterieur","salin"], install:"standard", delay:"long", budget:"€€€", notes:"Pour environnements corrosifs + 4 points."}
+  ],
+
+  // --- Question flows (two modes) ---
+  flows: {
+    user: [
+      {
+        id:"op",
+        title:"Que devez-vous faire avec la charge ?",
+        help:"Choisissez l’opération principale (sans jargon).",
+        type:"single",
+        answers:[
+          { value:"arrimage", label:"Maintenir une charge pendant un transport" },
+          { value:"manut", label:"Déplacer au sol (hauteur insignifiante)" },
+          { value:"epi", label:"Protéger les opérateurs (EPI)" },
+          { value:"levage", label:"Lever une charge (charge suspendue)" }
+        ],
+        weight: 15
+      },
+      {
+        id:"move",
+        title:"Après levage, devez-vous déplacer la charge horizontalement ?",
+        help:"Ex : déplacer sur un point fixe ou sur plusieurs emplacements.",
+        type:"single",
+        answers:[
+          { value:"none", label:"Non, uniquement lever / descendre" },
+          { value:"one", label:"Oui, sur un point fixe" },
+          { value:"multi", label:"Oui, sur plusieurs emplacements" }
+        ],
+        showIf: { op:["levage"] },
+        weight: 10
+      },
+      {
+        id:"env",
+        title:"Où se déroule l’opération ?",
+        help:"L’environnement conditionne fortement le choix (corrosion, ATEX…).",
+        type:"multi",
+        answers:[
+          { value:"interieur", label:"Intérieur" },
+          { value:"exterieur", label:"Extérieur" },
+          { value:"salin", label:"Extérieur exposé (air marin / salin)" },
+          { value:"atex", label:"Zone ATEX" }
+        ],
+        showIf: { op:["levage"] },
+        weight: 15
+      },
+      {
+        id:"weightKnown",
+        title:"Connaissez-vous le poids réel de la charge ?",
+        help:"Le poids réel conditionne la sélection. En cas de doute, escalade.",
+        type:"single",
+        answers:[
+          { value:"yes", label:"Oui, précisément" },
+          { value:"est", label:"Estimation" },
+          { value:"no", label:"Non / incertain" }
+        ],
+        showIf: { op:["levage"] },
+        weight: 20
+      },
+      {
+        id:"weightT",
+        title:"Quel est le poids de la charge (tonnes) ?",
+        help:"Saisissez une valeur. (Ex : 1.8)",
+        type:"number",
+        min: 0, max: 10, step: 0.1, placeholder: "ex : 1.8",
+        showIf: { op:["levage"], weightKnown:["yes","est"] },
+        weight: 15
+      },
+      {
+        id:"heightM",
+        title:"Quelle est la hauteur maximale de levage (m) ?",
+        help:"Ex : 4. (Impact direct sur le choix de l’appareil.)",
+        type:"number",
+        min: 0, max: 50, step: 0.5, placeholder: "ex : 4",
+        showIf: { op:["levage"] },
+        weight: 10
+      },
+      {
+        id:"support",
+        title:"Disposez-vous déjà d’un support pour l’appareil de levage ?",
+        help:"Ex : portique, potence, poutre existante…",
+        type:"single",
+        answers:[
+          { value:"yes", label:"Oui" },
+          { value:"no", label:"Non" },
+          { value:"idk", label:"Je ne sais pas" }
+        ],
+        showIf: { op:["levage"] },
+        weight: 8
+      },
+      {
+        id:"pickPoints",
+        title:"Combien de points d’accrochage sur la charge ?",
+        help:"Ex : 1 point, 2 points, 4 points…",
+        type:"single",
+        answers:[
+          { value:"1", label:"1 point" },
+          { value:"2", label:"2 points" },
+          { value:"4", label:"4 points" },
+          { value:"idk", label:"Je ne sais pas" }
+        ],
+        showIf: { op:["levage"] },
+        weight: 12
+      },
+      {
+        id:"eccentric",
+        title:"La charge est-elle équilibrée pendant le levage ?",
+        help:"Si excentrée, prévoir répartition des efforts (palonnier / 4 brins…).",
+        type:"single",
+        answers:[
+          { value:"balanced", label:"Oui, équilibrée" },
+          { value:"eccStable", label:"Non, excentrée mais stable" },
+          { value:"eccUnstable", label:"Non, excentrée instable" },
+          { value:"idk", label:"Je ne sais pas" }
+        ],
+        showIf: { op:["levage"] },
+        weight: 10
+      }
+    ],
+
+    expert: [
+      // Expert adds "energy preference" and "install level"
+      {
+        id:"energyPref",
+        title:"Préférence d’énergie pour l’appareil ?",
+        help:"Optionnel : oriente la présélection des appareils.",
+        type:"single",
+        answers:[
+          { value:"", label:"Aucune préférence" },
+          { value:"manuel", label:"Manuel" },
+          { value:"electrique", label:"Électrique" },
+          { value:"pneumatique", label:"Pneumatique" }
+        ],
+        showIf: { op:["levage"] },
+        weight: 5
+      },
+      {
+        id:"installPref",
+        title:"Niveau d’installation acceptable ?",
+        help:"Optionnel : filtrage selon les contraintes d’intégration.",
+        type:"single",
+        answers:[
+          { value:"", label:"Peu importe" },
+          { value:"simple", label:"Simple" },
+          { value:"standard", label:"Standard" },
+          { value:"complexe", label:"Complexe" },
+          { value:"etude", label:"Étude requise acceptable" }
+        ],
+        showIf: { op:["levage"] },
+        weight: 5
+      }
+    ]
+  },
+
+  // --- Rules (simplified) ---
+  rules: {
+    // Basic restrictions/alerts based on answers
+    restrictions: [
+      {
+        id:"R-ATEX",
+        when: (a)=> a.env?.includes("atex"),
+        message: "Zone ATEX détectée : uniquement des équipements compatibles ATEX (ex : palan pneumatique ATEX).",
+        level: "bad"
+      },
+      {
+        id:"R-SALIN",
+        when: (a)=> a.env?.includes("salin"),
+        message: "Environnement salin : privilégier inox / protections anticorrosion + maintenance renforcée.",
+        level: "warn"
+      },
+      {
+        id:"R-4PTS",
+        when: (a)=> a.pickPoints==="4",
+        message: "Accrochage 4 points : prévoir accessoire de répartition (palonnier 4 points / 4 brins) + vérifications montage.",
+        level: "info"
+      },
+      {
+        id:"R-ECC",
+        when: (a)=> ["eccStable","eccUnstable"].includes(a.eccentric),
+        message: "Charge excentrée : risques de surcharges locales → répartition des efforts obligatoire (palonnier / accessoires adaptés).",
+        level: "warn"
+      },
+      {
+        id:"R-MULTI",
+        when: (a)=> a.move==="multi",
+        message: "Déplacement sur plusieurs emplacements : efforts dynamiques potentiels → surdimensionnement / contrôles accrus recommandés.",
+        level: "info"
+      },
+      {
+        id:"R-NOWEIGHT",
+        when: (a)=> a.weightKnown==="no",
+        message: "Poids inconnu : impossible de valider une sélection sûre → escalade spécialiste recommandée.",
+        level: "bad"
+      },
+      {
+        id:"R-UNSTABLE",
+        when: (a)=> a.eccentric==="eccUnstable",
+        message: "Charge excentrée instable : configuration hors standard → étude / spécialiste indispensable.",
+        level: "bad"
+      }
+    ],
+
+    // Determine whether escalation to specialist is required
+    needsSpecialist: (a)=>{
+      if(a.op!=="levage") return false;
+      if(a.weightKnown==="no") return true;
+      if(a.support==="idk") return true;
+      if(a.eccentric==="eccUnstable") return true;
+      if(a.env?.includes("atex")) return true;
+      // If 4 points + excentré => recommend specialist
+      if(a.pickPoints==="4" && ["eccStable","eccUnstable"].includes(a.eccentric)) return true;
+      return false;
+    },
+
+    // Score clarity
+    clarity: (a)=>{
+      if(a.op!=="levage") return 55;
+      // scoring by completeness
+      let score = 0;
+      const add = (x)=> score += x;
+
+      // main elements
+      if(a.op==="levage") add(15);
+      if(a.move) add(6);
+      if(a.env && a.env.length) add(10);
+
+      if(a.weightKnown==="yes") add(18);
+      else if(a.weightKnown==="est") add(10);
+      else add(0);
+
+      if(a.weightT!=null && a.weightT!=="") add(12);
+      if(a.heightM!=null && a.heightM!=="") add(10);
+
+      if(a.support==="yes") add(8);
+      else if(a.support==="no") add(6);
+      else add(2);
+
+      if(a.pickPoints && a.pickPoints!=="idk") add(10);
+      if(a.eccentric && a.eccentric!=="idk") add(9);
+
+      // cap
+      score = Math.max(0, Math.min(100, Math.round(score)));
+      return score;
+    },
+
+    // Priority label
+    priority: (score, needs)=>{
+      if(needs) return "Spécialiste";
+      if(score>=80) return "Haute";
+      if(score>=60) return "Standard";
+      if(score>=40) return "Compléments";
+      return "Faible";
+    }
+  }
 };
 
-// productType:
-// - "catalogue_std" : produit catalogue maîtrisé
-// - "catalogue_adapte" : produit catalogue adapté (vigilance+)
-// - "catalogue_assoc" : association/intégration produits catalogue (vigilance++)
-// - "hors_catalogue" : hors catalogue (nouveau risque)
-const S = {
-  rating: null,  // A..F
-  q: null,       // Q1..Q3
-  urgent: null,  // true/false
-  stock: null,   // true/false
+/**
+ * =========================
+ * 2) APP STATE
+ * =========================
+ */
+let CONFIG = structuredClone(DEFAULT_CONFIG);
+let mode = "user"; // "user" or "expert"
+let currentIdx = 0;
 
-  productType: null,
-  supplierMastered: null, // true/false
-  supplierNew: false,     // checkbox à l’étape 5
+const answers = {}; // { [questionId]: value | array | number }
+let listingBrickFilter = ""; // "", "support", "appareil", "accessoire"
+const ui = {};
 
-  validationOK: null,     // true/false
-  doubtReg: false,        // checkbox
+/**
+ * =========================
+ * 3) HELPERS
+ * =========================
+ */
+function $(id){ return document.getElementById(id); }
 
-  amount: null,           // €
-  margin: null            // %
-};
-
-function el(id){ return document.getElementById(id); }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
-function resetAll(){
-  S.rating=null; S.q=null; S.urgent=null;
-  S.stock=null;
-  S.productType=null;
-  S.supplierMastered=null;
-  S.supplierNew=false;
-  S.validationOK=null; S.doubtReg=false;
-  S.amount=null; S.margin=null;
-  renderNode("rating");
+function safeParseJson(text){
+  try { return { ok:true, value: JSON.parse(text) }; }
+  catch(e){ return { ok:false, error: e.message }; }
 }
 
-function setStep(title, desc){
-  el("stepTitle").textContent = title;
-  el("stepDesc").textContent = desc;
-  el("choices").innerHTML = "";
-  el("inputs").innerHTML = "";
-  el("result").style.display = "none";
-}
-function addBtn(label, onClick, primary=false){
-  const b = document.createElement("button");
-  b.textContent = label;
-  if (primary) b.classList.add("primary");
-  b.onclick = onClick;
-  el("choices").appendChild(b);
-}
-function addInputHTML(html){
-  const d = document.createElement("div");
-  d.innerHTML = html;
-  el("inputs").appendChild(d);
-}
-
-/** Déclencheurs N4 (pas de réponse) */
-function isLevel4Triggered(){
-  if (S.rating === "F") return true;
-  if (S.q === "Q3" && (S.rating === "D" || S.rating === "E")) return true;
-  return false;
-}
-
-function computeDecision(){
-  // ---- N4 : pas de réponse (résultat immédiat) ----
-  if (S.rating === "F"){
-    return {
-      level:"N4", sla:SLA.N4,
-      priority:"⚫ Décision : pas de réponse",
-      management:"✅ Obligatoire (arbitrage / blocage)",
-      action:"Ne pas produire de devis/offre. Escalader : décision managériale sur reprise commerciale (conditions, gel, ou refus).",
-      warnings:["Client F : retard >45 jours → pas de réponse commerciale sans arbitrage."],
-      note:"Objectif : protéger l’entreprise et préserver la crédibilité commerciale."
-    };
-  }
-  if (S.q === "Q3" && S.rating === "D"){
-    return {
-      level:"N4", sla:SLA.N4,
-      priority:"⚫ Décision : pas de réponse",
-      management:"❌ Non (sauf exception validée)",
-      action:"Ne pas produire de devis détaillé. Qualification obligatoire : infos + échéance + décisionnaire. Répondre uniquement par cadrage/qualification si engagement client.",
-      warnings:["Client D + demande Q3 : faible valeur → pas de réponse chiffrée."],
-      note:"Objectif : protéger le temps commercial et concentrer l’effort sur les opportunités transformables."
-    };
-  }
-  if (S.q === "Q3" && S.rating === "E"){
-    return {
-      level:"N4", sla:SLA.N4,
-      priority:"⚫ Décision : pas de réponse",
-      management:"✅ Oui (sécurisation paiement si reprise)",
-      action:"Ne pas produire de devis/offre. Traiter d’abord le paiement (régularisation). Si reprise : conditions renforcées avant action.",
-      warnings:["Client E + demande Q3 : retard + demande faible → pas de réponse, sécurisation en amont."],
-      note:"Objectif : limiter l’exposition et revenir sur une base saine."
-    };
-  }
-
-  const warnings = [];
-  const triggers = [];
-
-  // Paiement E : on sécurise
-  if (S.rating === "E"){
-    triggers.push("Client E : retard >20 jours (sécurisation paiement)");
-    warnings.push("Client E : sécuriser paiement avant engagement logistique.");
-  }
-
-  // Filtre D : qualification avant devis détaillé
-  const isFilterD = (S.rating === "D");
-  if (isFilterD){
-    warnings.push("Client D : qualification obligatoire avant devis détaillé (éviter consommation de devis).");
-  }
-
-  // Capacité de réponse (R)
-  // Important : stock => produit catalogue standard + fournisseur maîtrisé
-  let R = "R3";
-  if (S.stock === true) R = "R1";
-  else {
-    // catalogue_std -> plutôt R2 si fournisseur maîtrisé
-    // catalogue_adapte / catalogue_assoc -> toujours R2 mais délai plus long (N2)
-    // hors_catalogue -> R3
-    if (S.productType === "hors_catalogue") R = "R3";
-    else if (S.supplierMastered === true) R = "R2";
-    else R = "R3";
-  }
-
-  // Priorité (matrice Q x R)
-  let priority = "🟡 Priorité normale";
-  if (S.q === "Q1" && R === "R1") priority = "🔴 Priorité max";
-  else if (S.q === "Q1" && R === "R2") priority = "🟠 Priorité haute";
-  else if (S.q === "Q1" && R === "R3") priority = "🟡 Priorité ajustée";
-  else if (S.q === "Q2" && R === "R1") priority = "🟠 Priorité haute";
-  else if (S.q === "Q2" && R === "R2") priority = "🟡 Priorité normale";
-  else if (S.q === "Q2" && R === "R3") priority = "🔵 Priorité basse";
-  else if (S.q === "Q3" && R === "R1") priority = "🟡 Priorité normale";
-  else if (S.q === "Q3" && R === "R2") priority = "🔵 Priorité basse";
-  else if (S.q === "Q3" && R === "R3") priority = "⚫ Priorité très faible";
-
-  // Niveau (N1/N2/N3) : logique produit + incertitude
-  let level = "N1";
-
-  // Stock => N1 rapide
-  if (S.stock === true) level = "N1";
-
-  // Catalogue standard (non stock) => N1 ; mais adapté/association => N2 (délai plus long)
-  if (S.stock === false){
-    if (S.productType === "catalogue_std") level = "N1";
-    if (S.productType === "catalogue_adapte" || S.productType === "catalogue_assoc") level = "N2";
-    if (S.productType === "hors_catalogue") level = "N2";
-    if (R === "R3" && S.q === "Q3") level = "N3";
-  }
-
-  // Validation technique/réglementaire
-  if (S.validationOK === false || S.doubtReg === true){
-    triggers.push("Validation technique/réglementaire non acquise (doute ou validation impossible)");
-    warnings.push("Doute technique/réglementaire : solliciter support pour sécuriser l’adéquation au besoin.");
-    if (level === "N1") level = "N2";
-  }
-
-  // Fournisseur : nouveau fournisseur (mêmes impacts qu’avant)
-  // Si nouveau fournisseur coché => considéré non maîtrisé (même si bouton 'maîtrisé' cliqué par erreur)
-  if (S.supplierNew === true){
-    if (typeof S.amount === "number" && S.amount > 1000){
-      triggers.push("Nouveau fournisseur + dossier > 1 000 €");
+function isQuestionVisible(q){
+  if(!q.showIf) return true;
+  // q.showIf: { someQuestionId: ["allowed", "values"] }
+  for(const [k, allowed] of Object.entries(q.showIf)){
+    const v = answers[k];
+    if(Array.isArray(v)){
+      // any overlap
+      const ok = v.some(x => allowed.includes(x));
+      if(!ok) return false;
     } else {
-      warnings.push("Nouveau fournisseur : vigilance (seuil management > 1 000 €).");
-    }
-    // On force une lecture prudente
-    warnings.push("Nouveau fournisseur : sécuriser délai/prix/logistique avant promesse.");
-  }
-
-  // Hors catalogue + fournisseur non maîtrisé
-  if (S.productType === "hors_catalogue" && S.supplierMastered === false){
-    triggers.push("Produit hors catalogue + fournisseur non maîtrisé");
-    warnings.push("Hors catalogue + fournisseur non maîtrisé : sécuriser délais/prix/logistique avant promesse.");
-    level = (level === "N3") ? "N3" : "N2";
-  }
-
-  // Critères financiers (page 7)
-  if (typeof S.margin === "number" && typeof S.amount === "number"){
-    if (S.margin < 22 && S.amount >= 5000){
-      triggers.push("Marge < 22% sur dossier ≥ 5 000 € (arbitrage)");
-      if (level === "N1") level = "N2";
+      if(!allowed.includes(String(v))) return false;
     }
   }
-
-  // SLA (délai cible) ajusté selon type produit
-  let sla = SLA[level];
-
-  if (level === "N1"){
-    // stock => <24, catalogue standard => <48
-    sla = (S.stock === true) ? "< 24 h (cible)" : "< 48 h (cible)";
-  }
-
-  if (level === "N2"){
-    // catalogue adapté / association : 48–72
-    if (S.productType === "catalogue_adapte" || S.productType === "catalogue_assoc"){
-      sla = "48–72 h (cible)";
-    }
-    // hors catalogue : 3–5 selon maîtrise
-    if (S.productType === "hors_catalogue"){
-      sla = (S.supplierMastered === true && S.supplierNew === false) ? "3 jours (cible)" : "3–5 jours (cible)";
-    }
-  }
-
-  if (level === "N3"){
-    sla = "4–5 jours ouvrés (cible)";
-  }
-
-  // Action recommandée
-  let action = "Produire une offre cohérente (besoin → solution), avec délai réaliste.";
-  if (isFilterD){
-    action = "Qualifier avant devis détaillé : infos + échéance + décisionnaire. Proposer cadrage/fiche de spécification.";
-  }
-  if (S.rating === "E"){
-    action = "Sécuriser conditions de paiement avant engagement (régularisation / conditions renforcées).";
-  }
-
-  // Notes type produit (valeur pédagogique)
-  if (S.productType === "catalogue_adapte"){
-    warnings.push("Produit catalogue adapté : vigilance accrue (vérifier limites d’emploi / cohérence avec besoin réel).");
-  }
-  if (S.productType === "catalogue_assoc"){
-    warnings.push("Association/intégration catalogue : vigilance accrue (compatibilités + cohérence globale de solution).");
-  }
-
-  const management = triggers.length
-    ? `✅ Sollicitation recommandée/obligatoire : ${triggers.join(" · ")}`
-    : "❌ Pas de sollicitation management requise";
-
-  return {
-    level, sla, priority, management, action,
-    warnings,
-    note:"Objectif : aller vite quand c’est maîtrisé, sécuriser quand la décision engage l’entreprise."
-  };
+  return true;
 }
 
-function showResult(){
-  const d = computeDecision();
-  const box = el("result");
-  box.style.display = "block";
-
-  const warnHtml = (d.warnings && d.warnings.length)
-    ? `<div class="note warn"><b>Points de vigilance :</b><ul>${d.warnings.map(w=>`<li>${escapeHtml(w)}</li>`).join("")}</ul></div>`
-    : "";
-
-  box.innerHTML = `
-    <h2>✅ Résultat</h2>
-    <div class="kvs">
-      <div class="kv"><div class="k">Niveau</div><div class="v">${escapeHtml(d.level)} <span class="pill">${escapeHtml(d.sla)}</span></div></div>
-      <div class="kv"><div class="k">Priorité</div><div class="v">${escapeHtml(d.priority)}</div></div>
-      <div class="kv"><div class="k">Sollicitation management</div><div class="v">${escapeHtml(d.management)}</div></div>
-      <div class="kv"><div class="k">Action recommandée</div><div class="v">${escapeHtml(d.action)}</div></div>
-    </div>
-    ${warnHtml}
-    <div class="note ok"><b>Note :</b> ${escapeHtml(d.note)}</div>
-    <div class="divider"></div>
-    <div class="row">
-      <button class="primary" onclick="window.__restart()">↩️ Recommencer</button>
-    </div>
-  `;
+function getFlowQuestions(){
+  const base = CONFIG.flows.user;
+  const extra = (mode==="expert") ? CONFIG.flows.expert : [];
+  // Expert questions appear after base flow (simple approach)
+  return [...base, ...extra].filter(isQuestionVisible);
 }
 
-function renderNode(node){
-  switch(node){
+function formatEnv(envArr){
+  if(!envArr || !envArr.length) return "—";
+  const map = { interieur:"Intérieur", exterieur:"Extérieur", salin:"Salin", atex:"ATEX" };
+  return envArr.map(e => map[e] || e).join(", ");
+}
 
-    case "rating": {
-      setStep("Étape 0 — Notation client ERP", "Sélectionne la notation (A→F). N4 est déclenché immédiatement sur F.");
-      addBtn("A (fiable & actif)", ()=>{ S.rating="A"; renderNode("q"); }, true);
-      addBtn("B (fiable à potentiel)", ()=>{ S.rating="B"; renderNode("q"); });
-      addBtn("C (découverte)", ()=>{ S.rating="C"; renderNode("q"); });
-      addBtn("D (0% transformé + >5 devis)", ()=>{ S.rating="D"; renderNode("q"); });
-      addBtn("E (retard > 20j)", ()=>{ S.rating="E"; renderNode("q"); });
-      addBtn("F (retard > 45j)", ()=>{ S.rating="F"; showResult(); });
-      break;
+function statusChip(status){
+  const cls = status==="Compatible" ? "ok" : (status==="À vérifier" ? "warn" : (status==="Incompatible" ? "bad" : "info"));
+  return `<span class="status ${cls}">${status}</span>`;
+}
+
+function clampNum(n, min, max){
+  const x = Number(n);
+  if(Number.isNaN(x)) return null;
+  return Math.max(min, Math.min(max, x));
+}
+
+/**
+ * =========================
+ * 4) CORE LOGIC: PRESÉLECTION
+ * =========================
+ * - Filter by user answers (usage/env/constraints)
+ * - Then apply "technical filters"
+ * - Provide status per product
+ */
+function computeAlerts(){
+  const out = [];
+  for(const r of CONFIG.rules.restrictions){
+    try{
+      if(r.when(answers)){
+        out.push({id:r.id, message:r.message, level:r.level});
+      }
+    }catch(e){}
+  }
+  return out;
+}
+
+function computeBaseEligibility(p){
+  // returns {status, reasons[]}
+  const reasons = [];
+  let status = "Compatible";
+
+  if(answers.op && answers.op!=="levage"){
+    // For this demo, we keep listing anyway but note it
+    status = "À vérifier";
+    reasons.push("Démo orientée Levage : branche non-levage.");
+  }
+
+  // Environment compatibility
+  const env = answers.env || [];
+  if(env.includes("atex")){
+    // Only products with atex in env allowed
+    if(!p.env.includes("atex")){
+      status = "Incompatible";
+      reasons.push("Incompatible ATEX.");
     }
-
-    case "q": {
-      setStep("Étape 1 — Qualité de la demande (Q1–Q3)", "⚠️ N4 est déclenché si Q3 est associé à un client D ou E (pas de réponse).");
-      addBtn("Q1 — Forte (clair + achat + urgence)", ()=>{ S.q="Q1"; renderNode("urgent"); }, true);
-      addBtn("Q2 — Moyenne (incomplet)", ()=>{ S.q="Q2"; renderNode("urgent"); });
-      addBtn("Q3 — Faible / inadaptée", ()=>{
-        S.q="Q3";
-        if (isLevel4Triggered()) showResult();
-        else renderNode("urgent");
-      });
-      break;
+  }
+  if(env.includes("salin")){
+    // Prefer salin-capable; others become "À vérifier" or incompatible for some types
+    if(!p.env.includes("salin") && p.brick !== "accessoire"){
+      // Supports/appareils non salin => verify
+      if(status!=="Incompatible"){
+        status = "À vérifier";
+        reasons.push("Environnement salin : protection anticorrosion à vérifier.");
+      }
     }
-
-    case "urgent": {
-      setStep("Étape 2 — Achat rapide / client pressé ?", "Le client a-t-il une contrainte de délai forte (réactivité attendue) ?");
-      addBtn("✅ Oui, client pressé", ()=>{ S.urgent=true; renderNode("stock"); }, true);
-      addBtn("❌ Non, délai standard", ()=>{ S.urgent=false; renderNode("stock"); });
-      break;
+  }
+  if(env.includes("exterieur")){
+    if(!p.env.includes("exterieur") && !p.env.includes("atex") && !p.env.includes("salin")){
+      if(status!=="Incompatible"){
+        status = "À vérifier";
+        reasons.push("Usage extérieur : compatibilité à confirmer.");
+      }
     }
+  }
+  if(env.includes("interieur")){
+    // interior generally ok
+  }
 
-    case "stock": {
-      setStep("Étape 3 — Produit disponible immédiatement (stock) ?", "Si stock = oui, alors produit catalogue (maîtrisé) + fournisseur maîtrisé (chaîne logistique et prix connus).");
-      addBtn("✅ Oui, produit en stock", ()=>{
-        S.stock = true;
-        S.productType = "catalogue_std";
-        S.supplierMastered = true;
-        S.supplierNew = false;
-        renderNode("techValidation");
-      }, true);
-
-      addBtn("❌ Non, produit à commander", ()=>{
-        S.stock = false;
-        renderNode("productType");
-      });
-      break;
+  // Height constraint (mostly devices/supports)
+  const h = (answers.heightM!=null && answers.heightM!=="") ? Number(answers.heightM) : null;
+  if(h!=null && !Number.isNaN(h) && h>0){
+    // for devices: need heightMaxM >= height
+    if(p.brick==="appareil"){
+      if(p.heightMaxM>0 && p.heightMaxM < h){
+        status = "Incompatible";
+        reasons.push("Hauteur max insuffisante.");
+      }
     }
-
-    case "productType": {
-      setStep("Étape 4 — Type de produit", "Sélectionne la nature de l’offre : plus on s’éloigne du catalogue standard, plus le risque et le délai augmentent.");
-      addBtn("📗 Produit catalogue (maîtrisé)", ()=>{
-        S.productType = "catalogue_std";
-        renderNode("supplier");
-      }, true);
-
-      addBtn("📘 Produit catalogue adapté (vigilance +)", ()=>{
-        S.productType = "catalogue_adapte";
-        renderNode("supplier");
-      });
-
-      addBtn("🧩 Association / intégration produits catalogue (vigilance ++)", ()=>{
-        S.productType = "catalogue_assoc";
-        renderNode("supplier");
-      });
-
-      addBtn("📙 Hors catalogue (nouveau risque)", ()=>{
-        S.productType = "hors_catalogue";
-        renderNode("supplier");
-      });
-      break;
+    // supports: ensure support heightMaxM >= height (simplified)
+    if(p.brick==="support"){
+      if(p.heightMaxM>0 && p.heightMaxM < h){
+        status = "Incompatible";
+        reasons.push("Hauteur support insuffisante.");
+      }
     }
+  }
 
-    case "supplier": {
-      setStep("Étape 5 — Fournisseur maîtrisé ?", "Un fournisseur maîtrisé rend la réponse plus fiable (délai/prix/logistique). Coche “Nouveau fournisseur” si premier dossier/aucun historique.");
+  // Weight / CMU check (simplified)
+  const wKnown = answers.weightKnown;
+  const w = (answers.weightT!=null && answers.weightT!=="") ? Number(answers.weightT) : null;
+  if(wKnown==="yes" || wKnown==="est"){
+    if(w!=null && !Number.isNaN(w) && w>0){
+      // For products with cmuT = 0 => ignore CMU (e.g., protection)
+      if(p.cmuT>0 && p.cmuT < w){
+        status = "Incompatible";
+        reasons.push("CMU insuffisante vs poids charge.");
+      } else if(p.cmuT>0 && p.cmuT >= w){
+        // ok
+      }
+    }
+  } else if(wKnown==="no"){
+    // can't validate CMU
+    if(status!=="Incompatible"){
+      status = "À vérifier";
+      reasons.push("Poids inconnu : CMU non validable.");
+    }
+  }
 
-      addInputHTML(`
-        <div class="field">
-          <div class="chk">
-            <input id="supplierNew" type="checkbox" />
-            <div>
-              <b>Nouveau fournisseur</b>
-              <div class="small">Fournisseur non référencé / première commande / pas d’historique. (Impact identique à l’ancienne règle de l’étape 7.)</div>
+  // 4 points + excentric => promote palonnier/4 brins, warn others
+  if(answers.pickPoints==="4"){
+    if(p.brick==="accessoire"){
+      const needsDistribution = ["eccStable","eccUnstable"].includes(answers.eccentric);
+      if(needsDistribution){
+        const isDistributor = /Palonnier 4 points|4 brins/i.test(p.name);
+        if(!isDistributor && p.cmuT>0){
+          if(status!=="Incompatible"){
+            status = "À vérifier";
+            reasons.push("4 points + excentré : prévoir répartition (palonnier/4 brins) — accessoire à confirmer.");
+          }
+        }
+      }
+    }
+  }
+
+  // Energy preference (expert)
+  if(mode==="expert" && answers.energyPref){
+    if(p.brick==="appareil" && answers.energyPref!=="" && p.energy!==answers.energyPref){
+      // not incompatible, but downgrade to "À vérifier"
+      if(status!=="Incompatible"){
+        status = "À vérifier";
+        reasons.push("Préférence énergie : ne correspond pas au filtre.");
+      }
+    }
+  }
+
+  // Installation preference (expert)
+  if(mode==="expert" && answers.installPref){
+    if(answers.installPref!=="" && p.install!==answers.installPref){
+      if(status!=="Incompatible"){
+        status = "À vérifier";
+        reasons.push("Niveau d’installation : ne correspond pas à la préférence.");
+      }
+    }
+  }
+
+  return { status, reasons };
+}
+
+function applyTechnicalFilters(items){
+  const cmuMin = Number(ui.filterCmu.value);
+  const install = ui.filterInstall.value;
+  const energy = ui.filterEnergy.value;
+  const delay = ui.filterDelay.value;
+  const budget = ui.filterBudget.value;
+
+  return items.filter(it=>{
+    const p = it.product;
+    // Brick filter
+    if(listingBrickFilter && p.brick!==listingBrickFilter) return false;
+
+    // CMU min
+    if(p.cmuT>0 && p.cmuT < cmuMin) return false;
+    // install
+    if(install && p.install!==install) return false;
+    // energy (only for devices, but allow filtering to exclude devices not matching; for others, keep)
+    if(energy){
+      if(p.brick==="appareil" && p.energy!==energy) return false;
+      if(p.brick!=="appareil") {
+        // keep non devices regardless of energy filter
+      }
+    }
+    // delay/budget
+    if(delay && p.delay!==delay) return false;
+    if(budget && p.budget!==budget) return false;
+
+    return true;
+  });
+}
+
+function computeListing(){
+  const base = CONFIG.products.map(p=>{
+    const elig = computeBaseEligibility(p);
+    return { product:p, status: elig.status, reasons: elig.reasons };
+  });
+
+  // Sort: Compatible first, then À vérifier, then Incompatible
+  const rank = { "Compatible":0, "À vérifier":1, "Incompatible":2 };
+  base.sort((a,b)=> (rank[a.status]-rank[b.status]) || a.product.brick.localeCompare(b.product.brick) || a.product.name.localeCompare(b.product.name));
+
+  // Apply UI filters
+  const filtered = applyTechnicalFilters(base);
+  return { base, filtered };
+}
+
+/**
+ * =========================
+ * 5) RENDER
+ * =========================
+ */
+function renderProgressTags(flow){
+  const tags = [];
+  for(const q of flow){
+    const v = answers[q.id];
+    if(v==null || v==="" || (Array.isArray(v) && v.length===0)) continue;
+    let valTxt = "";
+    if(q.type==="multi"){
+      valTxt = v.map(x=>{
+        const a = q.answers.find(y=>y.value===x);
+        return a ? a.label : x;
+      }).join(", ");
+    } else if(q.type==="single"){
+      const a = q.answers.find(y=>y.value===v);
+      valTxt = a ? a.label : String(v);
+    } else if(q.type==="number"){
+      valTxt = String(v);
+    }
+    tags.push(`<span class="tag info"><b>${q.title.split("?")[0]}</b> : ${escapeHtml(valTxt)}</span>`);
+  }
+  ui.progressTags.innerHTML = tags.join("") || `<span class="muted">Réponds aux questions pour générer une présélection.</span>`;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
+}
+
+function renderQuestion(flow){
+  if(flow.length===0){
+    ui.questionBox.innerHTML = `<p class="qtitle">Aucune question visible</p>`;
+    return;
+  }
+  currentIdx = Math.max(0, Math.min(currentIdx, flow.length-1));
+  const q = flow[currentIdx];
+
+  let body = `<p class="qtitle">${escapeHtml(q.title)}</p>
+              <p class="qhelp">${escapeHtml(q.help || "")}</p>`;
+
+  if(q.type==="single"){
+    body += `<div class="opt">` + q.answers.map(a=>{
+      const active = answers[q.id]===a.value;
+      return `<button class="btn ${active?'ok':''}" data-q="${q.id}" data-v="${escapeHtml(a.value)}">${escapeHtml(a.label)}</button>`;
+    }).join("") + `</div>`;
+  }
+
+  if(q.type==="multi"){
+    const cur = Array.isArray(answers[q.id]) ? answers[q.id] : [];
+    body += `<div class="opt">` + q.answers.map(a=>{
+      const active = cur.includes(a.value);
+      return `<button class="btn ${active?'ok':''}" data-q="${q.id}" data-v="${escapeHtml(a.value)}">${active?'✓ ':''}${escapeHtml(a.label)}</button>`;
+    }).join("") + `</div>
+    <div class="smallnote">Clique pour activer/désactiver plusieurs choix.</div>`;
+  }
+
+  if(q.type==="number"){
+    const v = (answers[q.id]!=null) ? answers[q.id] : "";
+    body += `<div class="field">
+              <input type="number" step="${q.step||1}" min="${q.min||0}" max="${q.max||9999}" placeholder="${escapeHtml(q.placeholder||'')}"
+                     id="num_${q.id}" value="${escapeHtml(v)}" />
             </div>
-          </div>
-          <div class="small">Si coché, on considère le fournisseur comme “non maîtrisé” par prudence.</div>
-        </div>
-      `);
-
-      el("supplierNew").onchange = (e)=>{ S.supplierNew = !!e.target.checked; };
-
-      addBtn("✅ Oui, fournisseur maîtrisé", ()=>{
-        // Si "nouveau fournisseur" coché, on force une lecture prudente
-        S.supplierMastered = (S.supplierNew === true) ? false : true;
-        renderNode("techValidation");
-      }, true);
-
-      addBtn("❌ Non, fournisseur non maîtrisé", ()=>{
-        S.supplierMastered = false;
-        renderNode("techValidation");
-      });
-
-      break;
-    }
-
-    case "techValidation": {
-      setStep("Étape 6 — Validation technique & réglementaire acquise ?", "Peux-tu reformuler le besoin (usage/charge/environnement) et valider l’adéquation technique ET réglementaire ?");
-      addInputHTML(`
-        <div class="field">
-          <div class="chk"><input id="doubtReg" type="checkbox" />
-            <div><b>Doute réglementaire</b><div class="small">Coche si l’usage / exigence applicable n’est pas clair (levage vs traction, documents requis, limites d’emploi…).</div></div>
-          </div>
-        </div>
-      `);
-      el("doubtReg").onchange = (e)=>{ S.doubtReg = !!e.target.checked; };
-
-      addBtn("✅ Oui, validation acquise", ()=>{ S.validationOK=true; renderNode("financial"); }, true);
-      addBtn("❌ Non / incertain", ()=>{ S.validationOK=false; renderNode("financial"); });
-      break;
-    }
-
-    case "financial": {
-      setStep("Étape 7 — Critères financiers", "Renseigne uniquement les éléments financiers : montant dossier et marge. (La partie fournisseur et structuration est traitée plus tôt.)");
-
-      addInputHTML(`
-        <div class="grid">
-          <div class="field">
-            <label>Montant du dossier (€)</label>
-            <input id="amount" type="number" min="0" step="1" placeholder="Ex : 4200" />
-            <div class="small">Seuil utilisé : nouveau fournisseur (> 1 000 €) (si case cochée à l’étape 5).</div>
-          </div>
-          <div class="field">
-            <label>Marge (%)</label>
-            <input id="margin" type="number" min="0" max="100" step="0.1" placeholder="Ex : 24.5" />
-            <div class="small">Règle : marge &lt; 22% et montant ≥ 5 000€ → arbitrage.</div>
-          </div>
-        </div>
-      `);
-
-      el("amount").oninput = (e)=>{ S.amount = e.target.value === "" ? null : Number(e.target.value); };
-      el("margin").oninput = (e)=>{ S.margin = e.target.value === "" ? null : Number(e.target.value); };
-
-      addBtn("✅ Calculer le résultat", ()=>showResult(), true);
-      addBtn("↩️ Revenir au début", ()=>resetAll());
-      break;
-    }
+            <div class="row">
+              <button class="btn tiny" data-numsave="${q.id}">Valider</button>
+            </div>`;
   }
+
+  body += `<div class="divider"></div>
+           <div class="row">
+             <button class="btn tiny secondary" ${currentIdx===0?'disabled style="opacity:.5;cursor:not-allowed"':''} id="prevBtn">← Précédent</button>
+             <button class="btn tiny" ${currentIdx===flow.length-1?'disabled style="opacity:.5;cursor:not-allowed"':''} id="nextBtn">Suivant →</button>
+           </div>
+           <div class="smallnote">Question ${currentIdx+1} / ${flow.length}</div>`;
+
+  ui.questionBox.innerHTML = body;
+
+  // attach events
+  ui.questionBox.querySelectorAll("button[data-q]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const qid = btn.getAttribute("data-q");
+      const val = btn.getAttribute("data-v");
+      const question = flow.find(x=>x.id===qid);
+      if(question.type==="multi"){
+        const cur = Array.isArray(answers[qid]) ? answers[qid] : [];
+        const idx = cur.indexOf(val);
+        if(idx>=0) cur.splice(idx,1); else cur.push(val);
+        answers[qid] = cur;
+      } else {
+        answers[qid] = val;
+      }
+      // if answer changes, flow visibility may change => recompute idx if needed
+      rerenderAll(true);
+    });
+  });
+
+  ui.questionBox.querySelectorAll("button[data-numsave]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const qid = btn.getAttribute("data-numsave");
+      const inp = ui.questionBox.querySelector(`#num_${CSS.escape(qid)}`);
+      const question = flow.find(x=>x.id===qid);
+      const n = clampNum(inp.value, question.min ?? -Infinity, question.max ?? Infinity);
+      answers[qid] = (n==null ? "" : n);
+      rerenderAll(false);
+    });
+  });
+
+  const prev = ui.questionBox.querySelector("#prevBtn");
+  const next = ui.questionBox.querySelector("#nextBtn");
+  if(prev) prev.addEventListener("click", ()=>{ currentIdx--; rerenderAll(false); });
+  if(next) next.addEventListener("click", ()=>{ currentIdx++; rerenderAll(false); });
 }
 
-window.__restart = resetAll;
-renderNode("rating");
+function renderAlerts(){
+  const alerts = computeAlerts();
+  if(alerts.length===0){
+    ui.alertsBox.innerHTML = `<span class="muted">Aucune alerte pour l’instant.</span>`;
+    return;
+  }
+  const mapLevel = { ok:"ok", warn:"warn", bad:"bad", info:"info" };
+  ui.alertsBox.innerHTML = alerts.map(a=>{
+    return `<div class="tag ${mapLevel[a.level]||'info'}" style="display:flex; margin:0 0 8px 0; border-radius:14px">
+              <b style="min-width:70px">${escapeHtml(a.id)}</b>
+              <span>${escapeHtml(a.message)}</span>
+            </div>`;
+  }).join("");
+}
+
+function renderKPIs(listing){
+  const needs = CONFIG.rules.needsSpecialist(answers);
+  const score = CONFIG.rules.clarity(answers);
+  const prio = CONFIG.rules.priority(score, needs);
+
+  ui.clarityScore.textContent = score;
+  ui.priorityLevel.textContent = prio;
+  ui.needsExpert.textContent = needs ? "Oui" : "Non";
+  ui.shortlistCount.textContent = listing.filtered.length;
+
+  // mode pill
+  ui.modePill.textContent = `Mode : ${mode==="user" ? "Usager" : "Expert"}`;
+}
+
+function renderTable(listing){
+  const tbody = ui.productsTable.querySelector("tbody");
+  const rows = listing.filtered.map(it=>{
+    const p = it.product;
+    const envTxt = formatEnv(p.env);
+    const cmuTxt = p.cmuT>0 ? `${p.cmuT.toFixed(2)} T`.replace(".00","") : "—";
+    const hTxt = p.heightMaxM>0 ? `${p.heightMaxM} m` : "—";
+    const energy = p.energy ? ({manuel:"Manuel", electrique:"Élec", pneumatique:"Pneuma"}[p.energy] || p.energy) : "—";
+    const inst = ({simple:"Simple", standard:"Standard", complexe:"Complexe", etude:"Étude"}[p.install] || p.install || "—");
+    const delay = ({stock:"Stock", court:"Court", long:"Long"}[p.delay] || p.delay || "—");
+    const brick = ({support:"Support", appareil:"Appareil", accessoire:"Accessoire"}[p.brick] || p.brick);
+
+    return `<tr title="${escapeHtml((it.reasons||[]).join(" | "))}">
+      <td><b>${escapeHtml(p.name)}</b><div class="muted" style="margin-top:4px">${escapeHtml(p.id)} — ${escapeHtml(p.notes||"")}</div></td>
+      <td>${escapeHtml(brick)}</td>
+      <td>${escapeHtml(cmuTxt)}</td>
+      <td>${escapeHtml(hTxt)}</td>
+      <td>${escapeHtml(energy)}</td>
+      <td>${escapeHtml(envTxt)}</td>
+      <td>${escapeHtml(inst)}</td>
+      <td>${escapeHtml(delay)}</td>
+      <td>${escapeHtml(p.budget||"—")}</td>
+      <td>${statusChip(it.status)}</td>
+    </tr>`;
+  }).join("");
+
+  tbody.innerHTML = rows || `<tr><td colspan="10" class="muted">Aucun produit ne correspond (présélection + filtres). Ajuste les filtres ou réponses.</td></tr>`;
+}
+
+function buildCDC(listing){
+  const needs = CONFIG.rules.needsSpecialist(answers);
+  const score = CONFIG.rules.clarity(answers);
+  const prio = CONFIG.rules.priority(score, needs);
+
+  // Summaries
+  const env = (answers.env && answers.env.length) ? answers.env.join(", ") : "—";
+  const weightKnown = answers.weightKnown || "—";
+  const weightT = (answers.weightT!=null && answers.weightT!=="") ? `${answers.weightT} T` : "—";
+  const heightM = (answers.heightM!=null && answers.heightM!=="") ? `${answers.heightM} m` : "—";
+  const move = answers.move || "—";
+  const support = answers.support || "—";
+  const pickPoints = answers.pickPoints || "—";
+  const eccentric = answers.eccentric || "—";
+
+  // Suggest “recommended set” if possible: pick top compatible per brick
+  const topByBrick = { support:null, appareil:null, accessoire:null };
+  for(const it of listing.base){
+    if(it.status!=="Compatible") continue;
+    const b = it.product.brick;
+    if(!topByBrick[b]) topByBrick[b] = it.product;
+  }
+
+  const alerts = computeAlerts().map(a=>`- [${a.id}] ${a.message}`).join("\n") || "- (aucune)";
+
+  const recSet = `
+Ensemble pressenti (si applicable) :
+- Support : ${topByBrick.support ? `${topByBrick.support.name} (${topByBrick.support.cmuT}T)` : "—"}
+- Appareil : ${topByBrick.appareil ? `${topByBrick.appareil.name} (${topByBrick.appareil.cmuT}T, H=${topByBrick.appareil.heightMaxM||"—"}m, énergie=${topByBrick.appareil.energy||"—"})` : "—"}
+- Accessoire : ${topByBrick.accessoire ? `${topByBrick.accessoire.name} (${topByBrick.accessoire.cmuT||"—"}T)` : "—"}
+`.trim();
+
+  const txt = `
+CAHIER DES CHARGES — Demande qualifiée (démo)
+================================================
+Score de clarté : ${score}/100
+Priorité : ${prio}
+Escalade spécialiste : ${needs ? "OUI" : "NON"}
+
+1) Contexte d’usage (déclaratif utilisateur)
+- Opération : ${answers.op || "—"}
+- Déplacement après levage : ${move}
+- Environnement : ${env}
+
+2) Charge & contraintes
+- Poids : ${weightKnown} | Valeur : ${weightT}
+- Hauteur max de levage : ${heightM}
+- Support existant : ${support}
+- Points d’accrochage : ${pickPoints}
+- Excentration : ${eccentric}
+
+3) Alertes / restrictions détectées
+${alerts}
+
+4) Pré-sélection (après arbre + filtres)
+- Total présélectionné : ${listing.base.length}
+- Total affiché (après filtres) : ${listing.filtered.length}
+
+${recSet}
+
+5) Recommandations (génériques)
+- Installation : respecter le niveau requis, valider structure/support si existant, essais de fonctionnement.
+- Maintenance : inspections avant usage + contrôles périodiques adaptés à l’environnement (salin/ATEX).
+- Restrictions : ne pas utiliser hors CMU/hauteur/conditions environnementales.
+- Si doute ou données manquantes : solliciter un spécialiste du matériel de levage.
+
+${CONFIG.meta.specialistCTA}
+`.trim();
+
+  ui.cdcText.value = txt;
+}
+
+function rerenderAll(resetQuestionIdxIfVisibilityChanged){
+  // recompute flow based on current answers + mode
+  const flow = getFlowQuestions();
+
+  // Ensure current question exists
+  if(resetQuestionIdxIfVisibilityChanged){
+    // If current question becomes invisible, move to nearest visible
+    if(currentIdx>=flow.length) currentIdx = flow.length-1;
+    currentIdx = Math.max(0, currentIdx);
+  }
+
+  renderProgressTags(flow);
+  renderQuestion(flow);
+  renderAlerts();
+
+  // listing
+  const listing = computeListing();
+  renderKPIs(listing);
+  renderTable(listing);
+  buildCDC(listing);
+}
+
+/**
+ * =========================
+ * 6) UI WIRING
+ * =========================
+ */
+function init(){
+  // bind ui
+  ui.modePill = $("modePill");
+  ui.progressTags = $("progressTags");
+  ui.questionBox = $("questionBox");
+  ui.alertsBox = $("alertsBox");
+  ui.clarityScore = $("clarityScore");
+  ui.priorityLevel = $("priorityLevel");
+  ui.needsExpert = $("needsExpert");
+  ui.shortlistCount = $("shortlistCount");
+  ui.productsTable = $("productsTable");
+
+  ui.filterCmu = $("filterCmu");
+  ui.filterInstall = $("filterInstall");
+  ui.filterEnergy = $("filterEnergy");
+  ui.filterDelay = $("filterDelay");
+  ui.filterBudget = $("filterBudget");
+  ui.filterCmuVal = $("filterCmuVal");
+
+  ui.configEditor = $("configEditor");
+  ui.configEditor.value = JSON.stringify(DEFAULT_CONFIG, null, 2);
+
+  // Filters events
+  const onFilterChange = ()=> {
+    ui.filterCmuVal.textContent = ui.filterCmu.value;
+    rerenderAll(false);
+  };
+  ["input","change"].forEach(evt=>{
+    ui.filterCmu.addEventListener(evt, onFilterChange);
+  });
+  ui.filterInstall.addEventListener("change", onFilterChange);
+  ui.filterEnergy.addEventListener("change", onFilterChange);
+  ui.filterDelay.addEventListener("change", onFilterChange);
+  ui.filterBudget.addEventListener("change", onFilterChange);
+
+  $("clearFiltersBtn").addEventListener("click", ()=>{
+    ui.filterCmu.value = 0; ui.filterCmuVal.textContent = "0";
+    ui.filterInstall.value = ""; ui.filterEnergy.value = "";
+    ui.filterDelay.value = ""; ui.filterBudget.value = "";
+    rerenderAll(false);
+  });
+
+  // Brick filter buttons
+  $("showSupportsBtn").addEventListener("click", ()=>{ listingBrickFilter="support"; rerenderAll(false); });
+  $("showDevicesBtn").addEventListener("click", ()=>{ listingBrickFilter="appareil"; rerenderAll(false); });
+  $("showAccessoriesBtn").addEventListener("click", ()=>{ listingBrickFilter="accessoire"; rerenderAll(false); });
+  $("showAllBtn").addEventListener("click", ()=>{ listingBrickFilter=""; rerenderAll(false); });
+
+  // Mode toggle
+  $("modeUserBtn").addEventListener("click", ()=>{
+    mode = "user";
+    // remove expert-only answers to avoid confusion
+    delete answers.energyPref;
+    delete answers.installPref;
+    rerenderAll(true);
+  });
+  $("modeExpertBtn").addEventListener("click", ()=>{
+    mode = "expert";
+    rerenderAll(true);
+  });
+
+  // Reset
+  $("resetBtn").addEventListener("click", ()=>{
+    for(const k of Object.keys(answers)) delete answers[k];
+    currentIdx = 0;
+    rerenderAll(true);
+  });
+
+  // Back office
+  $("applyConfigBtn").addEventListener("click", ()=>{
+    const parsed = safeParseJson(ui.configEditor.value);
+    if(!parsed.ok){
+      alert("JSON invalide : " + parsed.error);
+      return;
+    }
+    // Basic validation
+    if(!parsed.value.products || !parsed.value.flows || !parsed.value.rules){
+      alert("JSON incomplet : doit contenir products, flows, rules.");
+      return;
+    }
+    CONFIG = parsed.value;
+    // keep answers but rerender
+    currentIdx = 0;
+    rerenderAll(true);
+  });
+
+  $("restoreDefaultBtn").addEventListener("click", ()=>{
+    CONFIG = structuredClone(DEFAULT_CONFIG);
+    ui.configEditor.value = JSON.stringify(DEFAULT_CONFIG, null, 2);
+    currentIdx = 0;
+    rerenderAll(true);
+  });
+
+  // CDC copy/download
+  $("copyCdcBtn").addEventListener("click", async ()=>{
+    try{
+      await navigator.clipboard.writeText($("cdcText").value);
+      alert("Cahier des charges copié ✅");
+    }catch(e){
+      alert("Copie impossible (permissions navigateur).");
+    }
+  });
+  $("downloadCdcBtn").addEventListener("click", ()=>{
+    const blob = new Blob([$("cdcText").value], {type:"text/plain;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "cahier_des_charges_demo.txt";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  });
+
+  // Export JSON
+  $("exportJsonBtn").addEventListener("click", ()=>{
+    const blob = new Blob([JSON.stringify(CONFIG, null, 2)], {type:"application/json;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "config_demo_levage.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  });
+
+  // Initial render
+  ui.filterCmuVal.textContent = ui.filterCmu.value;
+  rerenderAll(true);
+}
+
+init();
 </script>
 </body>
 </html>
+
+
